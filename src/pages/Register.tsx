@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 
 function Register() {
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -14,7 +15,7 @@ function Register() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (password !== confirmPassword) {
       return setError('As senhas não coincidem');
     }
@@ -22,8 +23,11 @@ function Register() {
     try {
       setError('');
       setLoading(true);
-      await signUp(email, password);
-      navigate('/additional-info');
+
+      // Include the display_name in the sign-up metadata
+      await signUp(email, password, { display_name: name });
+
+      navigate('/confirmemail');
     } catch (err) {
       setError('Falha ao criar conta. Tente novamente.');
     } finally {
@@ -45,11 +49,18 @@ function Register() {
           </div>
         )}
         <form onSubmit={handleSubmit} className="space-y-4">
-          
           <div>
-            <label className="block text-sm font-medium text-white/70 mb-1">
-              Email
-            </label>
+            <label className="block text-sm font-medium text-white/70 mb-1">Nome Completo</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full p-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-white/70 mb-1">Email</label>
             <input
               type="email"
               value={email}
@@ -59,9 +70,7 @@ function Register() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-white/70 mb-1">
-              Senha
-            </label>
+            <label className="block text-sm font-medium text-white/70 mb-1">Senha</label>
             <input
               type="password"
               value={password}
@@ -71,9 +80,7 @@ function Register() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-white/70 mb-1">
-              Confirmar Senha
-            </label>
+            <label className="block text-sm font-medium text-white/70 mb-1">Confirmar Senha</label>
             <input
               type="password"
               value={confirmPassword}
@@ -94,10 +101,7 @@ function Register() {
         </form>
         <p className="mt-4 text-center text-white/70">
           Já tem uma conta?{' '}
-          <Link
-            to="/login"
-            className="text-blue-400 hover:text-blue-300 transition-colors"
-          >
+          <Link to="/login" className="text-blue-400 hover:text-blue-300 transition-colors">
             Fazer login
           </Link>
         </p>
@@ -106,4 +110,4 @@ function Register() {
   );
 }
 
-export default Register
+export default Register;
