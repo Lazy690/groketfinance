@@ -5,6 +5,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import ResetPassword from './pages/ResetPassword';
 import Dashboard from './pages/Dashboard';
+import AdditionalInfo from './pages/AdditionalInfo';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { session } = useAuth();
@@ -19,6 +20,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/additional-info" element={<AdditionalInfo />} />
           <Route
             path="/"
             element={
