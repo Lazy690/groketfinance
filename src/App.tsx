@@ -7,7 +7,7 @@ import ResetPassword from './pages/ResetPassword';
 import Dashboard from './pages/Dashboard';
 import AdditionalInfo from './pages/AdditionalInfo';
 import ConfirmEmail from './pages/ConfirmEmail';
-
+import Congratulations from './pages/Congratulations';
 
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -30,7 +30,7 @@ function App() {
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/additional-info" element={<AdditionalInfo />} />
           <Route path="/confirmemail" element={<ConfirmEmail />} />
-          
+          <Route path="/congratulations" element={<Congratulations />} />
          
           <Route
             path="/"
