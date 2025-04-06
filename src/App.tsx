@@ -11,7 +11,12 @@ import ConfirmEmail from './pages/ConfirmEmail';
 
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
-  const { session } = useAuth();
+  const { session, loading } = useAuth();
+
+  if (loading) {
+    return <div>Loading...</div>; // Show a loading indicator while checking the session
+  }
+
   return session ? <>{children}</> : <Navigate to="/login" />;
 }
 

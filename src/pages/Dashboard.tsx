@@ -167,14 +167,15 @@ function Dashboard() {
   };
 
   const removeTransaction = async (id: string) => {
+    console.log('Deleting transaction with id:', id); // Debugging log
     try {
       const { error } = await supabase
         .from('transactions')
         .delete()
         .eq('id', id);
-
+  
       if (error) throw error;
-
+  
       setTransactions(transactions.filter(t => t.id !== id));
     } catch (err) {
       setError('Erro ao remover transação');
