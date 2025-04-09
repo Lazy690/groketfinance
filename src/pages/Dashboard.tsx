@@ -1,27 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import {
-  LogOut,
-  Plus,
-  Trash2,
-  Calendar,
-  DollarSign,
-  Euro,
-  CircleDollarSign
-} from 'lucide-react';
-import {
-  LineChart,
-  Line,
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer
-} from 'recharts';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 
@@ -43,82 +22,60 @@ const currencySymbols: Record<Currency, string> = {
   KZ: 'Kz',
   USD: '$',
   EUR: '€',
-  BRL: 'R$'
-};
-
-const currencyRates: Record<Currency, number> = {
-  KZ: 1,
-  USD: 0.0012,
-  EUR: 0.0011,
-  BRL: 0.0060
+  BRL: 'R$',
 };
 
 function Dashboard() {
   const { signOut, session } = useAuth();
   const [selectedCurrency, setSelectedCurrency] = useState<Currency>('KZ');
-  const [selectedPeriod, setSelectedPeriod] = useState<Period>('month');
-  const [customDateRange, setCustomDateRange] = useState({
-    start: '',
-    end: ''
+  const [exchangeRates, setExchangeRates] = useState<Record<Currency, number>>({
+    KZ: 1,
+    USD: 1,
+    EUR: 1,
+    BRL: 1,
   });
-  const [showTransactionModal, setShowTransactionModal] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [newTransaction, setNewTransaction] = useState({
-    type: 'receita',
-    amount: '',
-    category: '',
-    description: '',
-    date: format(new Date(), 'yyyy-MM-dd')
-  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
+    fetchExchangeRates();
     fetchTransactions();
-  }, [session?.user?.id, selectedPeriod, customDateRange]);
+  }, [session?.user?.id]);
+
+  const fetchExchangeRates = async () => {
+    try {
+      const response = await fetch(
+        'https://v6.exchangerate-api.com/v6/YOUR_API_KEY/latest/AOA'
+      );
+      const data = await response.json();
+
+      if (data.result === 'success') {
+        setExchangeRates({
+          KZ: 1,
+          USD: data.conversion_rates.USD,
+          EUR: data.conversion_rates.EUR,
+          BRL: data.conversion_rates.BRL,
+        });
+      } else {
+        throw new Error('Failed to fetch exchange rates');
+      }
+    } catch (err) {
+      console.error('Error fetching exchange rates:', err);
+      setError('Erro ao carregar taxas de câmbio.');
+    }
+  };
 
   const fetchTransactions = async () => {
     if (!session?.user?.id) return;
 
     try {
       setLoading(true);
-      let query = supabase
+      const { data, error } = await supabase
         .from('transactions')
         .select('*')
         .eq('user_id', session.user.id)
         .order('date', { ascending: false });
-
-      // Aplicar filtro de período
-      const today = new Date();
-      const yesterday = new Date(today);
-      yesterday.setDate(yesterday.getDate() - 1);
-      const sevenDaysAgo = new Date(today);
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-
-      switch (selectedPeriod) {
-        case 'today':
-          query = query.eq('date', format(today, 'yyyy-MM-dd'));
-          break;
-        case 'yesterday':
-          query = query.eq('date', format(yesterday, 'yyyy-MM-dd'));
-          break;
-        case '7days':
-          query = query.gte('date', format(sevenDaysAgo, 'yyyy-MM-dd'));
-          break;
-        case 'month':
-          query = query.gte('date', format(startOfMonth, 'yyyy-MM-dd'));
-          break;
-        case 'custom':
-          if (customDateRange.start && customDateRange.end) {
-            query = query
-              .gte('date', customDateRange.start)
-              .lte('date', customDateRange.end);
-          }
-          break;
-      }
-
-      const { data, error } = await query;
 
       if (error) throw error;
       setTransactions(data || []);
@@ -130,79 +87,20 @@ function Dashboard() {
     }
   };
 
-  const addTransaction = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!session?.user?.id) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('transactions')
-        .insert([
-          {
-            user_id: session.user.id,
-            type: newTransaction.type,
-            amount: parseFloat(newTransaction.amount),
-            category: newTransaction.category,
-            description: newTransaction.description,
-            date: newTransaction.date
-          }
-        ])
-        .select();
-
-      if (error) throw error;
-
-      setTransactions([...(data || []), ...transactions]);
-      setShowTransactionModal(false);
-      setNewTransaction({
-        type: 'receita',
-        amount: '',
-        category: '',
-        description: '',
-        date: format(new Date(), 'yyyy-MM-dd')
-      });
-    } catch (err) {
-      setError('Erro ao adicionar transação');
-      console.error('Erro:', err);
-    }
-  };
-
-  const removeTransaction = async (id: string) => {
-    console.log('Deleting transaction with id:', id); // Debugging log
-    try {
-      const { error } = await supabase
-        .from('transactions')
-        .delete()
-        .eq('id', id);
-  
-      if (error) throw error;
-  
-      setTransactions(transactions.filter(t => t.id !== id));
-    } catch (err) {
-      setError('Erro ao remover transação');
-      console.error('Erro:', err);
-    }
-  };
-
   const convertCurrency = (amount: number) => {
-    return (amount * currencyRates[selectedCurrency]).toFixed(2);
+    return (amount * exchangeRates[selectedCurrency]).toFixed(2);
   };
 
   const totalRevenue = transactions
-    .filter(t => t.type === 'receita')
+    .filter((t) => t.type === 'receita')
     .reduce((sum, t) => sum + t.amount, 0);
 
   const totalExpenses = transactions
-    .filter(t => t.type === 'despesa')
+    .filter((t) => t.type === 'despesa')
     .reduce((sum, t) => sum + t.amount, 0);
 
   const balance = totalRevenue - totalExpenses;
 
-  const chartData = transactions
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    .map(t => ({
-      date: format(new Date(t.date), 'dd/MM'),
-      valor: t.type === 'receita' ? t.amount : -t.amount
-    }));
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-blue-900">
