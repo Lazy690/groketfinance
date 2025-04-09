@@ -46,7 +46,7 @@ function Dashboard() {
   const fetchExchangeRates = async () => {
     try {
       const response = await fetch(
-        'https://v6.exchangerate-api.com/v6/YOUR_API_KEY/latest/AOA'
+        'https://v6.exchangerate-api.com/v6/612f2d3d40f569b569f2ef5e/latest/USD'
       );
       const data = await response.json();
 
