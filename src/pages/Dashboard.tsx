@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
+import { LogOut } from 'react-feather';
 
 type Currency = 'KZ' | 'USD' | 'EUR' | 'BRL';
 type Period = 'today' | 'yesterday' | '7days' | 'month' | 'custom';
